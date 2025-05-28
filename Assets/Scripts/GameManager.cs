@@ -32,7 +32,5 @@ public class GameManager : MonoBehaviour
     {
         targetColor = colorOptions[Random.Range(0, colorOptions.Length)];
         targetColorImg.color = targetColor;
-
-        
     }
 }

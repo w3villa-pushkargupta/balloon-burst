@@ -1,6 +1,7 @@
-using DG.Tweening.Plugins.Options;
+using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using TMPro;
 using UnityEngine;
 
 public class BalloonSpawner : MonoBehaviour
@@ -9,31 +10,54 @@ public class BalloonSpawner : MonoBehaviour
     public float spawnTime = 1f;
     public int maxBalloon = 10;
 
-    private float magnitudeX = 1.1f;
+    public Collider2D boundArea;
 
-    public float minX = -7f, maxX = 7f, minY = -2.75f, maxY = 2.25f;
 
-    // private List<GameObject> activeballoons = new List<GameObject>();
+ // private List<GameObject> activeballoons = new List<GameObject>();
 
     private void Start()
     {
         //InvokeRepeating(nameof(Spawnballon), 0.05f, spawnTime);
-        Invoke(nameof(Spawnballon),1f);
+        //Invoke(nameof(Spawnballon), 1f);
+        StartCoroutine(Spawn());
+
+        Invoke(nameof(DeleteCollider), 2f);
     }
 
+    /*
     void Spawnballon()
     {
-        // if (activeballoons.Count >= maxBalloon) return;
+  // if (activeballoons.Count >= maxBalloon) return;
 
-        for (int i = 0; i < maxBalloon; i++)
-        {
+     for (int i = 0; i < maxBalloon; i++)
+     {
             Vector2 spawnPos = RandomRangeInScreen();
             GameObject balloon = Instantiate(balloonPrefab, spawnPos, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
-            // activeballoons.Add(balloon);
+      // activeballoons.Add(balloon);
 
             Color randomColor = GetColorWithPriority();
             balloon.GetComponent<Balloon>().SetColor(randomColor);
+      }
+    }
+    */
+
+    IEnumerator Spawn()
+    {
+        yield return new WaitForSeconds(spawnTime);
+        int i = 0;
+        while (i < maxBalloon)
+        {
+            Vector2 spawnPos = RandomRangeOutScreen();
+            GameObject balloon = Instantiate(balloonPrefab,spawnPos, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)),transform);
+
+            Color randomColor = GetColorWithPriority();
+            balloon.GetComponent<Balloon>().SetColor(randomColor);
+
+            i++;
+            yield return null; 
         }
+        Vector3 targetPos = CenterboundAreaOnCamera();
+        yield return boundArea.transform.DOMove(targetPos, 1f).SetEase(Ease.InOutQuad).WaitForCompletion();
     }
 
     Color GetColorWithPriority()
@@ -41,7 +65,7 @@ public class BalloonSpawner : MonoBehaviour
         float randomValue = Random.Range(0f, 1f);
         Debug.Log(randomValue);
 
-        if (randomValue < 0.5f)
+        if (randomValue < 0.6f)
         {
             return GameManager.instance.targetColor;
         }
@@ -68,13 +92,28 @@ public class BalloonSpawner : MonoBehaviour
         }
     }
 
-    Vector2 RandomRangeInScreen()
+    Vector2 RandomRangeOutScreen()
     {
-        Vector3 pos = transform.position;
+        Bounds bounds = boundArea.bounds;
+        float x = Random.Range(bounds.min.x, bounds.max.x);
+        float y = Random.Range(bounds.min.y, bounds.max.y);
+        return new Vector2(x, y);
+    }
 
-        pos.x = Random.Range(minX, maxX) * magnitudeX;
-        pos.y = Random.Range(minY, maxY);
+ Vector3 CenterboundAreaOnCamera()
+    {
+        if (boundArea == null || Camera.main == null)
+            return Vector3.zero;
 
-        return new Vector2(pos.x, pos.y);
+        return new Vector3(
+            Camera.main.transform.position.x,
+            Camera.main.transform.position.y -1f,
+            boundArea.transform.position.z 
+        );
+    }
+
+    void DeleteCollider()
+    {
+        boundArea.enabled = false;
     }
 }

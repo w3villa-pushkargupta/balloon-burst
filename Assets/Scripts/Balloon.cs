@@ -45,7 +45,5 @@ public class Balloon : MonoBehaviour
         var main = popEffect.main;
         main.startColor = GameManager.instance.targetColor;
     }
-
-
 }
 
