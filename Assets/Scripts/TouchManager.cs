@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TouchManager : MonoBehaviour
 {
-    private void Update()
+    private void FixedUpdate()
     {
         if (Input.GetMouseButton(0))
         {
