@@ -13,25 +13,27 @@ public class BalloonSpawner : MonoBehaviour
 
     public float minX = -7f, maxX = 7f, minY = -2.75f, maxY = 2.25f;
 
-    private List<GameObject> activeballoons = new List<GameObject>();
+    // private List<GameObject> activeballoons = new List<GameObject>();
 
     private void Start()
     {
-        InvokeRepeating(nameof(Spawnballon), 0.05f, spawnTime);
+        //InvokeRepeating(nameof(Spawnballon), 0.05f, spawnTime);
+        Invoke(nameof(Spawnballon),1f);
     }
 
     void Spawnballon()
     {
-        if (activeballoons.Count >= maxBalloon) return;
+        // if (activeballoons.Count >= maxBalloon) return;
 
-        Vector2 spawnPos = RandomRangeInScreen();
-        GameObject balloon = Instantiate(balloonPrefab, spawnPos, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
-        activeballoons.Add(balloon);
+        for (int i = 0; i < maxBalloon; i++)
+        {
+            Vector2 spawnPos = RandomRangeInScreen();
+            GameObject balloon = Instantiate(balloonPrefab, spawnPos, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
+            // activeballoons.Add(balloon);
 
-        // Color randomColor = GameManager.instance.colorOptions[Random.Range(0, GameManager.instance.colorOptions.Length)];
-
-        Color randomColor = GetColorWithPriority();
-        balloon.GetComponent<Balloon>().SetColor(randomColor);
+            Color randomColor = GetColorWithPriority();
+            balloon.GetComponent<Balloon>().SetColor(randomColor);
+        }
     }
 
     Color GetColorWithPriority()
@@ -39,14 +41,30 @@ public class BalloonSpawner : MonoBehaviour
         float randomValue = Random.Range(0f, 1f);
         Debug.Log(randomValue);
 
-        if (randomValue < 0.6f)
+        if (randomValue < 0.5f)
         {
             return GameManager.instance.targetColor;
         }
         else
         {
-            List<Color> otherColors = GameManager.instance.colorOptions.Where(c => c != GameManager.instance.targetColor).ToList();
-            return otherColors[Random.Range(0, otherColors.Count)];
+            Color otherColor1 = Color.white;
+            Color otherColor2 = Color.white;
+            int count = 0;
+
+            for (int i = 0; i < GameManager.instance.Size; i++)
+            {
+                if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
+                {
+                    if (count == 0)
+                        otherColor1 = GameManager.instance.colorOptions[i];
+                    else
+                        otherColor2 = GameManager.instance.colorOptions[i];
+
+                    count++;
+                }
+            }
+
+            return Random.Range(0, 2) == 0 ? otherColor1 : otherColor2;
         }
     }
 

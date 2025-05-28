@@ -840,7 +840,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   balloonPrefab: {fileID: 1779304586093423359, guid: 6babf2f0abfc6ca48bd55416ee584a22, type: 3}
   spawnTime: 1
-  maxBalloon: 20
+  maxBalloon: 10
   minX: -8
   maxX: 8
   minY: -2.75

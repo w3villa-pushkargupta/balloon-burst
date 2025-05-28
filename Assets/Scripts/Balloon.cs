@@ -28,7 +28,7 @@ public class Balloon : MonoBehaviour
 
     private void Shake()
     {
-        transform.DOShakePosition(0.3f, 0.3f);
+        transform.DOShakePosition(0.3f, new Vector3(0.05f, 0.01f, 0f));
     }
 
     private void Pop()

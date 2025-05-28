@@ -10,6 +10,10 @@ public class GameManager : MonoBehaviour
 
     public Image targetColorImg;
 
+    private int size;
+
+    public int Size {  get { return size; } }
+
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -20,6 +24,8 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SelectColor();
+
+        size = colorOptions.Length;
     }
 
     public void SelectColor()
