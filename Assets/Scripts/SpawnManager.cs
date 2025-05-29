@@ -3,55 +3,55 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BalloonSpawner : MonoBehaviour
+public class SpawnManager : MonoBehaviour
 {
     public GameObject balloonPrefab;
-    public float spawnTime = .5f;
+    public float spawnTime = 1f;
     public int maxBalloon = 10;
+    public Transform Parent;
 
-    private Collider2D boundArea;
-    public Collider2D outArea;
+    public Collider2D boundArea;
+
 
     private void Start()
     {
-        boundArea = GetComponent<Collider2D>();
         StartCoroutine(Spawn());
 
-        Invoke(nameof(DeleteCollider), 3f);
+        Invoke(nameof(DeleteCollider), 2f);
     }
 
     IEnumerator Spawn()
     {
         yield return new WaitForSeconds(spawnTime);
- 
+        int i = 0;
+
         List<Vector2> usedPositions = new List<Vector2>();
         float colliderRadius = balloonPrefab.GetComponent<CircleCollider2D>().radius * balloonPrefab.transform.localScale.x;
 
-        int i = 0;
         while (i < maxBalloon)
         {
-            Vector2 newPos = RandomRangeInScreen(usedPositions, colliderRadius);
-            usedPositions.Add(newPos);
+            Vector2 pos = new Vector2(Random.RandomRange(-8, 8/*Screen.width*/), Random.RandomRange(-5, 4/*Screen.height*/));//RandomRangeOutScreen(usedPositions, colliderRadius);
+            usedPositions.Add(pos);
 
-            float oldPosY = RandomRangeOutScreen(); 
-
-            GameObject balloon = Instantiate(balloonPrefab, outArea.transform.position, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
+            GameObject balloon = Instantiate(balloonPrefab, Parent.position, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
 
             Color randomColor = GetColorWithPriority();
             balloon.GetComponent<Balloon>().SetColor(randomColor);
 
             i++;
-            yield return new WaitForSeconds(Random.Range(0.05f, 0.1f));
+            yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
 
-            balloon.transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack);
+            balloon.transform.DOMove(pos, 0.5f).From(new Vector2(pos.x, Parent.position.y)).SetEase(Ease.OutBack);
         }
+        //Vector3 targetPos = CenterboundAreaOnCamera();
+        //yield return boundArea.transform.DOMove(targetPos, 1f).SetEase(Ease.InOutQuad).WaitForCompletion();
     }
 
     Color GetColorWithPriority()
     {
         float randomValue = Random.Range(0f, 1f);
 
-        if (randomValue < 0.6f)
+        if (randomValue < 0.7f)
         {
             return GameManager.instance.targetColor;
         }
@@ -78,7 +78,7 @@ public class BalloonSpawner : MonoBehaviour
         }
     }
 
-    Vector2 RandomRangeInScreen(List<Vector2> usedPositions, float colliderRadius)
+    Vector2 RandomRangeOutScreen(List<Vector2> usedPositions, float colliderRadius)
     {
         Bounds bounds = boundArea.bounds;
         Vector2 spawnPos;
@@ -94,7 +94,7 @@ public class BalloonSpawner : MonoBehaviour
             bool tooClose = false;
             foreach (var pos in usedPositions)
             {
-                if (Vector2.Distance(pos, spawnPos) < colliderRadius * 3f)
+                if (Vector2.Distance(pos, spawnPos) < colliderRadius * 2f)
                 {
                     tooClose = true;
                     break;
@@ -111,17 +111,22 @@ public class BalloonSpawner : MonoBehaviour
         return spawnPos;
     }
 
-    float RandomRangeOutScreen()
+    Vector3 CenterboundAreaOnCamera()
     {
-        Bounds bounds = outArea.bounds;
-        float y = Random.Range(bounds.min.y, bounds.max.y);
-        return y;
+        if (boundArea == null || Camera.main == null)
+            return Vector3.zero;
 
+        return new Vector3(
+            Camera.main.transform.position.x,
+            Camera.main.transform.position.y - 1f,
+            boundArea.transform.position.z
+        );
     }
 
     void DeleteCollider()
     {
         boundArea.enabled = false;
-        outArea.enabled = false;
     }
 }
+
+
