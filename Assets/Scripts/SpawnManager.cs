@@ -61,7 +61,7 @@ public class SpawnManager : MonoBehaviour
             Color otherColor2 = Color.white;
             int count = 0;
 
-            for (int i = 0; i < GameManager.instance.Size; i++)
+            for (int i = 0; i < GameManager.instance.colorOptions.Length; i++)
             {
                 if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
                 {

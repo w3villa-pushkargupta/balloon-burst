@@ -10,9 +10,8 @@ public class GameManager : MonoBehaviour
 
     public Image targetColorImg;
 
-    private int size;
-
-    public int Size {  get { return size; } }
+    public int maxBalloon = 20;
+    public int balloonTargetCount = 5;
 
     private void Awake()
     {
@@ -24,8 +23,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SelectColor();
-
-        size = colorOptions.Length;
     }
 
     public void SelectColor()

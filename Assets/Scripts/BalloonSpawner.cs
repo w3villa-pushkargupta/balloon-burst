@@ -6,13 +6,12 @@ using UnityEngine;
 public class BalloonSpawner : MonoBehaviour
 {
     public GameObject balloonPrefab;
-    public float spawnTime = .5f;
-    public int maxBalloon = 10;
+    private float spawnTime = 0.5f;
 
     private Collider2D boundArea;
-    public Collider2D outArea;
+    private int targetColorReturnCount = 0; 
 
-    private void Start()
+    void Start()
     {
         boundArea = GetComponent<Collider2D>();
         StartCoroutine(Spawn());
@@ -28,22 +27,21 @@ public class BalloonSpawner : MonoBehaviour
         float colliderRadius = balloonPrefab.GetComponent<CircleCollider2D>().radius * balloonPrefab.transform.localScale.x;
 
         int i = 0;
-        while (i < maxBalloon)
+        while (i < GameManager.instance.maxBalloon)
         {
             Vector2 newPos = RandomRangeInScreen(usedPositions, colliderRadius);
             usedPositions.Add(newPos);
 
             float oldPosY = RandomRangeOutScreen(); 
 
-            GameObject balloon = Instantiate(balloonPrefab, outArea.transform.position, Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
+            GameObject balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,6f,0), Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
 
             Color randomColor = GetColorWithPriority();
             balloon.GetComponent<Balloon>().SetColor(randomColor);
 
-            i++;
-            yield return new WaitForSeconds(Random.Range(0.05f, 0.1f));
-
+            yield return new WaitForSeconds(Random.Range(0.01f, 0.08f));
             balloon.transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack);
+            i++;
         }
     }
 
@@ -51,31 +49,37 @@ public class BalloonSpawner : MonoBehaviour
     {
         float randomValue = Random.Range(0f, 1f);
 
-        if (randomValue < 0.6f)
+        if (randomValue<0.8f && targetColorReturnCount < GameManager.instance.balloonTargetCount)
         {
+            targetColorReturnCount++;
             return GameManager.instance.targetColor;
         }
         else
         {
-            Color otherColor1 = Color.white;
-            Color otherColor2 = Color.white;
-            int count = 0;
-
-            for (int i = 0; i < GameManager.instance.Size; i++)
-            {
-                if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
-                {
-                    if (count == 0)
-                        otherColor1 = GameManager.instance.colorOptions[i];
-                    else
-                        otherColor2 = GameManager.instance.colorOptions[i];
-
-                    count++;
-                }
-            }
-
-            return Random.Range(0, 2) == 0 ? otherColor1 : otherColor2;
+            return SetOtherColor();
         }
+    }
+
+    private Color SetOtherColor()
+    {
+        Color otherColor1 = Color.white;
+        Color otherColor2 = Color.white;
+        int count = 0;
+
+        for (int i = 0; i < GameManager.instance.colorOptions.Length; i++)
+        {
+            if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
+            {
+                if (count == 0)
+                    otherColor1 = GameManager.instance.colorOptions[i];
+                else
+                    otherColor2 = GameManager.instance.colorOptions[i];
+
+                count++;
+            }
+        }
+
+        return Random.Range(0, 2) == 0 ? otherColor1 : otherColor2;
     }
 
     Vector2 RandomRangeInScreen(List<Vector2> usedPositions, float colliderRadius)
@@ -113,15 +117,13 @@ public class BalloonSpawner : MonoBehaviour
 
     float RandomRangeOutScreen()
     {
-        Bounds bounds = outArea.bounds;
-        float y = Random.Range(bounds.min.y, bounds.max.y);
+        Bounds bounds = boundArea.bounds;
+        float y = bounds.min.y - Random.Range(0f,2f);
         return y;
-
     }
 
     void DeleteCollider()
     {
         boundArea.enabled = false;
-        outArea.enabled = false;
     }
 }
