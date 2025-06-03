@@ -1,22 +1,44 @@
 using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BalloonSpawner : MonoBehaviour
 {
     public GameObject balloonPrefab;
     private float spawnTime = 0.5f;
 
-    private Collider2D boundArea;
-    private int targetColorReturnCount = 0; 
+    [SerializeField] private float marginX = 1f;
+    [SerializeField] private float marginY = 3f;
+    [SerializeField] private float yOffset = -1.25f;
+
+    [SerializeField] private float transformOffsetY = 7f;
+
+    private BoxCollider2D boundArea;
+    private int targetColorReturnCount = 0;
+
+    public Action OnCoroutineComplete;
 
     void Start()
     {
-        boundArea = GetComponent<Collider2D>();
+        Camera cam = Camera.main;
+        boundArea = GetComponent<BoxCollider2D>();
+
+        Vector2 bottomLeft = cam.ScreenToWorldPoint(new Vector2(0, 0));
+        Vector2 topRight = cam.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
+
+        Vector2 screenSize = topRight - bottomLeft;
+        Vector2 adjustedSize = screenSize - new Vector2(marginX, marginY);
+
+        boundArea.size = adjustedSize;
+        boundArea.offset = new Vector2(0, yOffset);
+  
+
         StartCoroutine(Spawn());
 
-        Invoke(nameof(DeleteCollider), 3f);
     }
 
     IEnumerator Spawn()
@@ -32,24 +54,34 @@ public class BalloonSpawner : MonoBehaviour
             Vector2 newPos = RandomRangeInScreen(usedPositions, colliderRadius);
             usedPositions.Add(newPos);
 
-            float oldPosY = RandomRangeOutScreen(); 
+            float oldPosY = boundArea.bounds.min.y - Random.Range(0f, transformOffsetY);
 
-            GameObject balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,6f,0), Quaternion.Euler(0, 0, Random.Range(-50f, 50f)), transform);
+            GameObject balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,transformOffsetY,0), Quaternion.Euler(0, 0, UnityEngine.Random.Range(-50f, 50f)), transform);
 
             Color randomColor = GetColorWithPriority();
             balloon.GetComponent<Balloon>().SetColor(randomColor);
 
             yield return new WaitForSeconds(Random.Range(0.01f, 0.08f));
-            balloon.transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack);
+
+            balloon.transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack)
+                .OnComplete(() =>
+                {
+                    balloon.GetComponent<Balloon>().TimeToAnimate();
+                });
+
+
             i++;
         }
+        boundArea.enabled = false;
+
+        OnCoroutineComplete?.Invoke();
     }
 
     Color GetColorWithPriority()
     {
         float randomValue = Random.Range(0f, 1f);
 
-        if (randomValue<0.8f && targetColorReturnCount < GameManager.instance.balloonTargetCount)
+        if (randomValue<0.7f && targetColorReturnCount < GameManager.instance.balloonTargetCount)
         {
             targetColorReturnCount++;
             return GameManager.instance.targetColor;
@@ -86,7 +118,7 @@ public class BalloonSpawner : MonoBehaviour
     {
         Bounds bounds = boundArea.bounds;
         Vector2 spawnPos;
-        int maxAttempts = 100;
+        int maxAttempts = 120;
         int attempts = 0;
 
         do
@@ -112,18 +144,59 @@ public class BalloonSpawner : MonoBehaviour
         }
         while (attempts < maxAttempts);
 
+        if (attempts >= maxAttempts)
+        {
+            Debug.LogWarning("Could not find a valid spawn position." + attempts);
+        }
+
         return spawnPos;
     }
 
-    float RandomRangeOutScreen()
+    Vector2 GridSampleInScreen(List<Vector2> usedPositions, float colliderRadius)
     {
         Bounds bounds = boundArea.bounds;
-        float y = bounds.min.y - Random.Range(0f,2f);
-        return y;
+        float spacing = colliderRadius * 3f;
+
+        List<Rect> gridCells = new List<Rect>();
+
+        for (float x = bounds.min.x + colliderRadius; x <= bounds.max.x - colliderRadius; x += spacing)
+        {
+            for (float y = bounds.min.y + colliderRadius; y <= bounds.max.y - colliderRadius; y += spacing)
+            {
+                gridCells.Add(new Rect(x - spacing / 2f, y - spacing / 2f, spacing, spacing));
+            }
+        }
+
+        Shuffle(gridCells);
+
+        foreach (var cell in gridCells)
+        {
+            Vector2 randomPos = new Vector2(
+                Random.Range(cell.xMin + colliderRadius, cell.xMax - colliderRadius),
+                Random.Range(cell.yMin + colliderRadius, cell.yMax - colliderRadius)
+            );
+
+            if (!IsTooCloseToOthers(randomPos, usedPositions, colliderRadius * 3f))
+            {
+                return randomPos;
+            }
+        }
+
+        Debug.LogWarning("Could not find a valid spawn position in grid.");
+        return Vector2.zero;
     }
 
-    void DeleteCollider()
+    bool IsTooCloseToOthers(Vector2 position, List<Vector2> others, float minDistance)
     {
-        boundArea.enabled = false;
+        return others.Any(p => Vector2.Distance(p, position) < minDistance);
+    }
+
+    void Shuffle<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 }

@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   balloonColor: {r: 0, g: 0, b: 0, a: 0}
-  popEffect: {fileID: 7317844682250620769, guid: 05c7574589810e84bb8140fa23f892ad, type: 3}
+  popEffect: {fileID: 1160634681538789949, guid: 0b16375cc46440a4b867ab08e2ab74cb, type: 3}
 --- !u!1 &3344360222000253300
 GameObject:
   m_ObjectHideFlags: 0
