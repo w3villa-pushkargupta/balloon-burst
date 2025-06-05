@@ -8,21 +8,22 @@ using Random = UnityEngine.Random;
 
 public class BalloonSpawner : MonoBehaviour
 {
-    public GameObject balloonPrefab;
-    private float spawnTime = 0.5f;
-
-    [SerializeField] private float marginX = 1f;
-    [SerializeField] private float marginY = 3f;
-    [SerializeField] private float yOffset = -1.25f;
-
-    [SerializeField] private float transformOffsetY = 7f;
+    [SerializeField] private Balloon balloonPrefab;
 
     private BoxCollider2D boundArea;
     private int targetColorReturnCount = 0;
 
     public Action OnCoroutineComplete;
 
-    void Start()
+    [Header("Collider Screen Space")]
+    [SerializeField] float firstSpawnOffsetY = 7f;
+
+    [SerializeField] private float marginX = 1f;
+    [SerializeField] private float marginY = 3f;
+    [SerializeField] private float yOffset = -1.25f;
+
+
+    private void Start()
     {
         Camera cam = Camera.main;
         boundArea = GetComponent<BoxCollider2D>();
@@ -38,15 +39,15 @@ public class BalloonSpawner : MonoBehaviour
   
 
         StartCoroutine(Spawn());
-
     }
 
     IEnumerator Spawn()
     {
-        yield return new WaitForSeconds(spawnTime);
- 
+        float firstSpawnTime = 0.5f;
+        yield return new WaitForSeconds(firstSpawnTime);   
+
         List<Vector2> usedPositions = new List<Vector2>();
-        float colliderRadius = balloonPrefab.GetComponent<CircleCollider2D>().radius * balloonPrefab.transform.localScale.x;
+        float colliderRadius = balloonPrefab.GetComponentInChildren<CircleCollider2D>().radius * balloonPrefab.transform.localScale.x;
 
         int i = 0;
         while (i < GameManager.instance.maxBalloon)
@@ -54,22 +55,20 @@ public class BalloonSpawner : MonoBehaviour
             Vector2 newPos = RandomRangeInScreen(usedPositions, colliderRadius);
             usedPositions.Add(newPos);
 
-            float oldPosY = boundArea.bounds.min.y - Random.Range(0f, transformOffsetY);
+            float oldPosY = boundArea.bounds.min.y - Random.Range(0f, firstSpawnOffsetY);
 
-            GameObject balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,transformOffsetY,0), Quaternion.Euler(0, 0, UnityEngine.Random.Range(-50f, 50f)), transform);
+            Balloon balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,firstSpawnOffsetY,0), Quaternion.Euler(0, 0, Random.Range(-50f, 50f)),transform);
 
             Color randomColor = GetColorWithPriority();
-            balloon.GetComponent<Balloon>().SetColor(randomColor);
+            balloon.SetColor(randomColor, newPos);
 
             yield return new WaitForSeconds(Random.Range(0.01f, 0.08f));
 
-            balloon.transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack)
+           balloon. transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack)
                 .OnComplete(() =>
                 {
-                    balloon.GetComponent<Balloon>().TimeToAnimate();
+                    balloonPrefab.TimeToAnimate();
                 });
-
-
             i++;
         }
         boundArea.enabled = false;

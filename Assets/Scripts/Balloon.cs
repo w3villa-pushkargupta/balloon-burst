@@ -1,24 +1,27 @@
 ﻿using DG.Tweening;
 using UnityEngine;
+using UnityEngine.TestTools;
+using static UnityEngine.Rendering.HableCurve;
 using Random = UnityEngine.Random;
 
 public class Balloon : MonoBehaviour
 {
-    public Color balloonColor;
-    private SpriteRenderer sr;
+    [SerializeField] private Color balloonColor;
 
-    public ParticleSystem popEffect;
+    [SerializeField] private SpriteRenderer sr;
+    [SerializeField] private ParticleSystem popEffect;
 
-    private float newOffset;
+    [SerializeField] private float percentageAnimateAtTime = 0.3f;
 
-    float timer = 0f;
-    float interval = 1f;
+    private float newRandomValue;
+    private float timer = 0f;
+    private float intervalToAnimateBalloon = 1f;
 
-    Tween waveYTween;
+    private Tween waveYTween;
+    private Vector2 originalPosition;
 
     private void Start()
     {
-        sr = GetComponent<SpriteRenderer>();
         sr.color = balloonColor;
     }
 
@@ -38,8 +41,10 @@ public class Balloon : MonoBehaviour
 
     private void Shake()
     {
-        transform.DOShakePosition(0.3f, new Vector3(0.05f, 0.01f, 0f));
-        GameManager.instance.BalloonShakeSound();
+        transform.DOShakePosition(0.3f, new Vector3(0.05f, 0.01f, 0f)).OnComplete(() =>
+        {
+            AudioManager.Instance.PlayShakeSound();
+        });
     }
 
     private void Pop()
@@ -47,13 +52,14 @@ public class Balloon : MonoBehaviour
         Destroy(gameObject);
 
         GameManager.instance.RegisterBalloonDestroyed();
-        GameManager.instance.BalloonPopSound();
+        AudioManager.Instance.PlayPopSound();
         Instantiate(popEffect, transform.position, Quaternion.identity);
 
     }
 
-    public void SetColor(Color color)
+    public void SetColor(Color color, Vector2 position)
     {
+        originalPosition = position;
         balloonColor = color;
         if (sr != null) sr.color = color;
 
@@ -67,19 +73,55 @@ public class Balloon : MonoBehaviour
     public void AnimateBalloon()
     {
         waveYTween?.Kill();
-        if (newOffset < 0.6f)
+        if (newRandomValue < percentageAnimateAtTime)
         {
-            float yoyoOffset = Random.Range(0.01f, 0.06f);
-            float yoyoDuration = Random.Range(0.2f, 0.5f);
-
-            waveYTween = transform.DOMoveY(transform.position.y + yoyoOffset, yoyoDuration)
-                .SetLoops(-1, LoopType.Yoyo)
-                .SetEase(Ease.InOutSine);
-
-            //waveYTween = transform.DOShakePosition(duration: yoyoDuration, strength: new Vector3(0f, yoyoOffset, 0f), vibrato: 10, randomness: 90, fadeOut: true)
-            //    .SetLoops(-1, LoopType.Restart);
+            StartFloatingEffect();
         }
+
         else {  return; }
+    }
+
+    private void StartFloatingEffect()
+    {
+        float moveRange = 0.09f;     
+        float segmentDuration = 1f;  
+        int segments = 3;
+        Sequence floatSequence = DOTween.Sequence();
+
+        Vector2 currentPos = originalPosition;
+
+        for (int i = 0; i < segments; i++)
+        {
+            Vector2 randomOffset = new Vector2(
+                Random.Range(-moveRange, moveRange),
+                Random.Range(-moveRange, moveRange)
+            );
+
+            Vector2 nextPoint = currentPos + randomOffset;
+            floatSequence.Append(transform.DOMove(nextPoint, segmentDuration).SetEase(Ease.InOutSine));
+            currentPos = nextPoint;
+        }
+
+        for (int i = 0; i < segments; i++)
+        {
+            Vector2 randomOffset = new Vector2(
+                Random.Range(-moveRange, moveRange),
+                Random.Range(-moveRange, moveRange)
+            );
+
+            Vector2 nextPoint = originalPosition ;// + randomOffset * (1f - (i / (float)segments)); 
+            floatSequence.Append(transform.DOMove(nextPoint, segmentDuration).SetEase(Ease.InOutSine));
+        }
+
+        floatSequence.OnComplete(StartFloatingEffect);
+
+        //float yoyoOffset = Random.Range(0.01f, 0.06f);
+        //float yoyoDuration = Random.Range(0.2f, 0.6f);
+
+        //waveYTween = transform.DOMoveY(transform.position.y + yoyoOffset, yoyoDuration)
+        //    .SetLoops(-1, LoopType.Yoyo)
+        //    .SetEase(Ease.InOutSine);
+
     }
 
     private void Update()
@@ -90,11 +132,11 @@ public class Balloon : MonoBehaviour
     public void TimeToAnimate()
     { 
         timer += Time.deltaTime;
-        if (timer >= interval)
+        if (timer >= intervalToAnimateBalloon)
         {
             timer = 0f;
 
-            newOffset = Random.Range(0.1f, 1f);
+            newRandomValue = Random.Range(0.1f, 1f);
             AnimateBalloon();
         }
     }

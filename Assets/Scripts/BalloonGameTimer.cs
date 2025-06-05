@@ -4,17 +4,22 @@ using TMPro;
 
 public class BalloonGameTimer : MonoBehaviour
 {
-    public TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private BalloonSpawner balloonSpawner;
 
-    private float timer = 15f;
+    [Header("Gameplay Time")]
+    [SerializeField] private float gameTimer = 15f;
     private bool timerRunning = true;
 
-    public BalloonSpawner balloonSpawner;
+    [Header("Get Stars/Points")]
+    [SerializeField] private int minThreeStarTime = 10;
+    [SerializeField] private int minTwoStarTime = 5;
 
     void Start()
     {
         balloonSpawner.OnCoroutineComplete += StartTimer;
         GameManager.instance.OnGameCompleted += StopTimer;
+        timerText.color = GameManager.instance.targetColor; 
     }
 
     void StartTimer()
@@ -24,10 +29,10 @@ public class BalloonGameTimer : MonoBehaviour
 
     IEnumerator TimeRunner()
     {
-        while (timerRunning && timer > 0f)
+        while (timerRunning && gameTimer > 0f)
         {
-            timer -= Time.deltaTime;
-            if (timer < 0f) timer = 0f;
+            gameTimer -= Time.deltaTime;
+            if (gameTimer < 0f) gameTimer = 0f;
 
             UpdateTimerUI();
             yield return null; 
@@ -37,8 +42,8 @@ public class BalloonGameTimer : MonoBehaviour
 
     int UpdateTimerUI()
     {
-        timerText.text = Mathf.CeilToInt(timer).ToString();
-        return Mathf.CeilToInt(timer);
+        timerText.text = Mathf.CeilToInt(gameTimer).ToString();
+        return Mathf.CeilToInt(gameTimer);
     }
 
     private void StopTimer()
@@ -46,11 +51,11 @@ public class BalloonGameTimer : MonoBehaviour
         timerRunning = false;
         int timeValue = UpdateTimerUI();
 
-        if (timeValue >= 10)
+        if (timeValue >= minThreeStarTime)
         {
             Debug.Log("3 Star");
         }
-        else if (timeValue >= 5 && timeValue < 10)
+        else if (timeValue >= minTwoStarTime && timeValue < minThreeStarTime)
         {
             Debug.Log("2 Star");
         }
