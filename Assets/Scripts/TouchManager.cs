@@ -3,7 +3,13 @@ using UnityEngine.Rendering.Universal;
 
 public class TouchManager : MonoBehaviour
 {
-    //[SerializeField] private Balloon balloon;
+    [SerializeField] private ParticleSystem touchEffect;
+
+    private void Start()
+    {
+        var main = touchEffect.main;
+        main.startColor = GameManager.instance.targetColor;
+    }
     private void FixedUpdate()
     {
         if (Input.GetMouseButton(0))
@@ -16,6 +22,10 @@ public class TouchManager : MonoBehaviour
                 if (balloon != null)
                 {
                     balloon.HandleTouch();
+                    if (balloon.GetBalloonColor() == GameManager.instance.targetColor)
+                    {
+                        Instantiate(touchEffect, touchPos, Quaternion.identity);
+                    }
                 }
             }
         }

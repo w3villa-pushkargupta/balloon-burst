@@ -355,7 +355,7 @@ Transform:
   m_GameObject: {fileID: 2715670733696831575}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -25.284079, y: -62.187664, z: 0}
+  m_LocalPosition: {x: -0.13133529, y: 0.08531372, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -378,7 +378,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   balloonColor: {r: 0.9811321, g: 0.8101032, b: 0.05245039, a: 1}
   sr: {fileID: 8657465928748708672}
-  popEffect: {fileID: 5661266349494578449, guid: 2a11ccf3889c6be4880259bfd1ad0b85, type: 3}
+  popEffect:
+  - {fileID: 8497290714105747526, guid: ac7506ff2fdd50047a381dff09d1235a, type: 3}
   percentageAnimateAtTime: 0.3
 --- !u!1 &5261899640865003000
 GameObject:

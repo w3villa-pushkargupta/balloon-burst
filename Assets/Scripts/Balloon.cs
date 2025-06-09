@@ -1,7 +1,5 @@
 ﻿using DG.Tweening;
 using UnityEngine;
-using UnityEngine.TestTools;
-using static UnityEngine.Rendering.HableCurve;
 using Random = UnityEngine.Random;
 
 public class Balloon : MonoBehaviour
@@ -9,7 +7,7 @@ public class Balloon : MonoBehaviour
     [SerializeField] private Color balloonColor;
 
     [SerializeField] private SpriteRenderer sr;
-    [SerializeField] private ParticleSystem popEffect;
+    [SerializeField] private ParticleSystem[] popEffect;
 
     [SerializeField] private float percentageAnimateAtTime = 0.3f;
 
@@ -39,6 +37,11 @@ public class Balloon : MonoBehaviour
 
     }
 
+    public Color GetBalloonColor()
+    {
+        return balloonColor;
+    }
+
     private void Shake()
     {
         transform.DOShakePosition(0.3f, new Vector3(0.05f, 0.01f, 0f)).OnComplete(() =>
@@ -53,7 +56,7 @@ public class Balloon : MonoBehaviour
 
         GameManager.instance.RegisterBalloonDestroyed();
         AudioManager.Instance.PlayPopSound();
-        Instantiate(popEffect, transform.position, Quaternion.identity);
+        Instantiate(popEffect[Random.Range(0,popEffect.Length)], transform.position, Quaternion.identity);
 
     }
 
@@ -65,7 +68,7 @@ public class Balloon : MonoBehaviour
 
         if (popEffect != null && GameManager.instance != null)
         {
-            var main = popEffect.main;
+            var main = popEffect[Random.Range(0, popEffect.Length)].main;
             main.startColor = GameManager.instance.targetColor;
         }
     }

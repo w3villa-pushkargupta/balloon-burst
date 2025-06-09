@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using TMPro;
+using UnityEngine.UI;
 
 public class BalloonGameTimer : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class BalloonGameTimer : MonoBehaviour
         balloonSpawner.OnCoroutineComplete += StartTimer;
         GameManager.instance.OnGameCompleted += StopTimer;
         timerText.color = GameManager.instance.targetColor; 
+     
     }
 
     void StartTimer()
