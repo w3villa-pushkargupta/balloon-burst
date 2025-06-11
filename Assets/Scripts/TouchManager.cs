@@ -3,12 +3,12 @@ using UnityEngine.Rendering.Universal;
 
 public class TouchManager : MonoBehaviour
 {
-    [SerializeField] private ParticleSystem touchEffect;
+  //  [SerializeField] private ParticleSystem touchEffect;
 
     private void Start()
     {
-        var main = touchEffect.main;
-        main.startColor = GameManager.instance.targetColor;
+        //var main = touchEffect.main;
+        //main.startColor = GameManager.instance.targetColor;
     }
     private void FixedUpdate()
     {
@@ -22,10 +22,10 @@ public class TouchManager : MonoBehaviour
                 if (balloon != null)
                 {
                     balloon.HandleTouch();
-                    if (balloon.GetBalloonColor() == GameManager.instance.targetColor)
-                    {
-                        Instantiate(touchEffect, touchPos, Quaternion.identity);
-                    }
+                    //if (balloon.GetBalloonColor() == GameManager.instance.targetColor)
+                    //{
+                    //    Instantiate(touchEffect, touchPos, Quaternion.identity);
+                    //}
                 }
             }
         }

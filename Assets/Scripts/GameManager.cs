@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,11 +9,18 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
+
     [Header("Colors")]
     public Color[] colorOptions;
     public Color targetColor;
 
     public Image targetColorImg;
+
+
+    [Header("Sprites")]
+    public Sprite[] upperLetterSpriteOptions;
+    public Sprite upperLetterTargetSprite;
+    public Image upperLetterTargetSpriteImg;
 
     [Header("Balloon Spawn Numbers")]
     public int maxBalloon = 20;
@@ -21,6 +30,7 @@ public class GameManager : MonoBehaviour
 
     public Action OnGameCompleted;
 
+    public RectTransform sliderStarTarget;
 
     private void Awake()
     {
@@ -32,12 +42,20 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SelectColor();
+        SelectSprite();
     }
 
     public void SelectColor()
     {
         targetColor = colorOptions[UnityEngine.Random.Range(0, colorOptions.Length)];
-        targetColorImg.color = targetColor;
+      //  targetColorImg.color = targetColor;
+    }
+
+    public void SelectSprite()
+    {
+        upperLetterTargetSprite = upperLetterSpriteOptions[UnityEngine.Random.Range(0, upperLetterSpriteOptions.Length)];
+        upperLetterTargetSpriteImg.sprite = upperLetterTargetSprite;
+        upperLetterTargetSpriteImg.color = targetColor;
     }
 
     public void RegisterBalloonDestroyed()
@@ -49,6 +67,13 @@ public class GameManager : MonoBehaviour
             OnGameCompleted?.Invoke();
         }
     }
+
+    public float GetBalloonProgress()
+    {
+        float progress = (float)countPopped / balloonTargetCount;
+        return Mathf.Clamp01(progress);
+    }
+
 
     public void RestartGame()
     {

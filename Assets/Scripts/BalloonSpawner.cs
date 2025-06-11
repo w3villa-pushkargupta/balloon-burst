@@ -11,9 +11,15 @@ public class BalloonSpawner : MonoBehaviour
     [SerializeField] private Balloon balloonPrefab;
 
     private BoxCollider2D boundArea;
-    private int targetColorReturnCount = 0;
+    //private int targetColorReturnCount = 0;
+    private int upperLetterTargetSpriteReturnCount = 0;
+
+    private Dictionary<Sprite, Color> spriteColorMap = new Dictionary<Sprite, Color>();
+    private List<Sprite> nonTargetSpritePool = new List<Sprite>();
 
     public Action OnCoroutineComplete;
+    [SerializeField] private bool isGridSampling = true;
+    [SerializeField] private int extraCharacterSprites = 5;
 
     [Header("Collider Screen Space")]
     [SerializeField] float firstSpawnOffsetY = 7f;
@@ -36,8 +42,8 @@ public class BalloonSpawner : MonoBehaviour
 
         boundArea.size = adjustedSize;
         boundArea.offset = new Vector2(0, yOffset);
-  
 
+        PrepareNonTargetSprites();
         StartCoroutine(Spawn());
     }
 
@@ -52,16 +58,31 @@ public class BalloonSpawner : MonoBehaviour
         int i = 0;
         while (i < GameManager.instance.maxBalloon)
         {
-            Vector2 newPos = RandomRangeInScreen(usedPositions, colliderRadius);
+            Vector2 newPos;
+
+            if (isGridSampling) newPos = GridSampleInScreen(usedPositions, colliderRadius);
+            else  newPos = RandomRangeInScreen(usedPositions, colliderRadius);
+
             usedPositions.Add(newPos);
 
             float oldPosY = boundArea.bounds.min.y - Random.Range(0f, firstSpawnOffsetY);
 
             Balloon balloon = Instantiate(balloonPrefab, transform.position - new Vector3(0,firstSpawnOffsetY,0), Quaternion.Euler(0, 0, Random.Range(-50f, 50f)),transform);
 
-            Color randomColor = GetColorWithPriority();
-            balloon.SetColor(randomColor, newPos);
 
+            Color randomColor;
+            Sprite randomSprite = GetSpriteWithPriority();
+
+            if (randomSprite == GameManager.instance.upperLetterTargetSprite)
+            {
+                randomColor = GameManager.instance.targetColor;
+            }
+            else
+            {
+                randomColor = spriteColorMap[randomSprite];
+            }
+
+            balloon.SetSprite(newPos, randomSprite, randomColor);
             yield return new WaitForSeconds(Random.Range(0.01f, 0.08f));
 
            balloon. transform.DOMove(newPos, 0.5f).From(new Vector2(newPos.x, oldPosY)).SetEase(Ease.OutBack)
@@ -76,42 +97,99 @@ public class BalloonSpawner : MonoBehaviour
         OnCoroutineComplete?.Invoke();
     }
 
-    Color GetColorWithPriority()
+
+    public void PrepareNonTargetSprites()
+    {
+        nonTargetSpritePool = GameManager.instance.upperLetterSpriteOptions
+            .Where(sprite => sprite != GameManager.instance.upperLetterTargetSprite)
+            .Distinct()
+            .OrderBy(s => Random.value)
+            .Take(extraCharacterSprites)
+            .ToList();
+    }
+
+    //Color GetColorWithPriority()
+    //{
+    //    float randomValue = Random.Range(0f, 1f);
+
+    //    if (randomValue<0.7f && targetColorReturnCount < GameManager.instance.balloonTargetCount)
+    //    {
+    //        targetColorReturnCount++;
+    //        return GameManager.instance.targetColor;
+    //    }
+    //    else
+    //    {
+    //        return SetOtherColor();
+    //    }
+    //}
+
+    //private Color SetOtherColor()
+    //{
+    //    Color otherColor1 = Color.white;
+    //    Color otherColor2 = Color.white;
+    //    int count = 0;
+
+    //    for (int i = 0; i < GameManager.instance.colorOptions.Length; i++)
+    //    {
+    //        if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
+    //        {
+    //            if (count == 0)
+    //                otherColor1 = GameManager.instance.colorOptions[i];
+    //            else
+    //                otherColor2 = GameManager.instance.colorOptions[i];
+
+    //            count++;
+    //        }
+    //    }
+
+    //    return Random.Range(0, 2) == 0 ? otherColor1 : otherColor2;
+    //}
+
+
+    Sprite GetSpriteWithPriority()
     {
         float randomValue = Random.Range(0f, 1f);
 
-        if (randomValue<0.7f && targetColorReturnCount < GameManager.instance.balloonTargetCount)
+        if (randomValue < 0.7f && upperLetterTargetSpriteReturnCount < GameManager.instance.balloonTargetCount)
         {
-            targetColorReturnCount++;
-            return GameManager.instance.targetColor;
+            upperLetterTargetSpriteReturnCount++;
+            return GameManager.instance.upperLetterTargetSprite;
         }
         else
         {
-            return SetOtherColor();
+            return SetOtherSprite();
         }
     }
 
-    private Color SetOtherColor()
+
+    public Sprite SetOtherSprite()
     {
-        Color otherColor1 = Color.white;
-        Color otherColor2 = Color.white;
-        int count = 0;
+        if (nonTargetSpritePool == null || nonTargetSpritePool.Count == 0)
+            return null;
 
-        for (int i = 0; i < GameManager.instance.colorOptions.Length; i++)
+        Sprite selectedSprite = nonTargetSpritePool[Random.Range(0, nonTargetSpritePool.Count)];
+
+        if (!spriteColorMap.ContainsKey(selectedSprite))
         {
-            if (GameManager.instance.colorOptions[i] != GameManager.instance.targetColor)
-            {
-                if (count == 0)
-                    otherColor1 = GameManager.instance.colorOptions[i];
-                else
-                    otherColor2 = GameManager.instance.colorOptions[i];
-
-                count++;
-            }
+            Color newColor = GetUniqueNonTargetColor();
+            spriteColorMap[selectedSprite] = newColor;
         }
 
-        return Random.Range(0, 2) == 0 ? otherColor1 : otherColor2;
+        return selectedSprite;
     }
+
+    private Color GetUniqueNonTargetColor()
+    {
+        List<Color> availableColors = GameManager.instance.colorOptions
+            .Where(c => c != GameManager.instance.targetColor && !spriteColorMap.Values.Contains(c))
+            .ToList();
+
+        if (availableColors.Count == 0)
+            return Color.white; 
+
+        return availableColors[Random.Range(0, availableColors.Count)];
+    }
+
 
     Vector2 RandomRangeInScreen(List<Vector2> usedPositions, float colliderRadius)
     {

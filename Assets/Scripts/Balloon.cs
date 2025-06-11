@@ -1,13 +1,16 @@
 ﻿using DG.Tweening;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Balloon : MonoBehaviour
 {
-    [SerializeField] private Color balloonColor;
+   [SerializeField] private Color balloonColor;
 
+    [SerializeField] private SpriteRenderer graphicsSprite;
     [SerializeField] private SpriteRenderer sr;
-    [SerializeField] private ParticleSystem[] popEffect;
+    [SerializeField] private ParticleSystem popEffect;
 
     [SerializeField] private float percentageAnimateAtTime = 0.3f;
 
@@ -21,11 +24,13 @@ public class Balloon : MonoBehaviour
     private void Start()
     {
         sr.color = balloonColor;
+       
     }
 
     public void HandleTouch()
     {
-        if (balloonColor == GameManager.instance.targetColor)
+        //if (balloonColor == GameManager.instance.targetColor)
+        if(graphicsSprite.sprite == GameManager.instance.upperLetterTargetSprite)
         {
             Pop();
             
@@ -56,21 +61,35 @@ public class Balloon : MonoBehaviour
 
         GameManager.instance.RegisterBalloonDestroyed();
         AudioManager.Instance.PlayPopSound();
-        Instantiate(popEffect[Random.Range(0,popEffect.Length)], transform.position, Quaternion.identity);
 
+        GameObject effect = Instantiate(popEffect.gameObject, transform.position, Quaternion.identity);
+
+      //  effect.transform.DOMove(targetPosition, 0.5f).SetEase(Ease.OutQuad);
     }
 
     public void SetColor(Color color, Vector2 position)
     {
         originalPosition = position;
         balloonColor = color;
-        if (sr != null) sr.color = color;
 
         if (popEffect != null && GameManager.instance != null)
         {
-            var main = popEffect[Random.Range(0, popEffect.Length)].main;
+            var main = popEffect.main;
             main.startColor = GameManager.instance.targetColor;
         }
+    }
+
+    public void SetSprite(Vector2 position, Sprite sr, Color color)
+    {
+        originalPosition = position;
+        balloonColor = color;
+        if (graphicsSprite != null) graphicsSprite.sprite = sr;
+
+        //if (popEffect != null && GameManager.instance != null)
+        //{
+        //    var main = popEffect.main;
+        //    main.startColor = GameManager.instance.targetColor;
+        //}
     }
 
     public void AnimateBalloon()
