@@ -62,6 +62,9 @@ public class GameManager : MonoBehaviour
     {
         countPopped++;
 
+        BalloonGameTimer timer = FindObjectOfType<BalloonGameTimer>();
+        timer?.UpdateSliderProgress();
+
         if (countPopped >= balloonTargetCount)
         {
             OnGameCompleted?.Invoke();

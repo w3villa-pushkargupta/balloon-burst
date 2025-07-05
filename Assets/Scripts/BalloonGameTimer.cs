@@ -45,7 +45,6 @@ public class BalloonGameTimer : MonoBehaviour
         timerSlider.maxValue = 1f;
         timerSlider.value = 0f;
 
-        UpdateSliderProgress();
         UpdateTimerUI();
     }
 
@@ -57,15 +56,9 @@ public class BalloonGameTimer : MonoBehaviour
             if (currentTime < 0f) currentTime = 0f;
 
             UpdateTimerUI();
-           UpdateSliderProgress();
 
             yield return null;
         }
-
-        //if (currentTime <= 0f && timerRunning)
-        //{
-        //    StopTimer();
-        //}
     }
 
     //void Update()
@@ -75,7 +68,6 @@ public class BalloonGameTimer : MonoBehaviour
 
     public void UpdateSliderProgress()
     {
-        if(!timerRunning) return;   
         targetValue = GameManager.instance.GetBalloonProgress();
 
         timerSlider.DOKill();
@@ -94,6 +86,7 @@ public class BalloonGameTimer : MonoBehaviour
         timerRunning = false;
         ShowStarBasedOnTimer();
     }
+
 
     private void ShowStarBasedOnTimer()
     {
